@@ -121,36 +121,38 @@ def checkout_cart(cart_id: int, db: Session = Depends(get_db)):
     }
 
 
-@router.get("/user/{user_id}", response_model=list[schemas.CartOut])
+@router.get("/user/{user_id}", response_model=schemas.CartOut)
 def get_cart_details(user_id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).get(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    carts = db.query(models.Cart).filter(models.Cart.user_id == user_id).all()
-    if not carts:
-        raise HTTPException(status_code=404, detail="No carts found for this user")
+    # Get only the active cart (not checked out)
+    cart = db.query(models.Cart).filter(
+        models.Cart.user_id == user_id,
+        models.Cart.is_checked_out == False
+    ).order_by(models.Cart.created_at.desc()).first()
+    
+    if not cart:
+        raise HTTPException(status_code=404, detail="No active cart found for this user")
 
-    result = []
-    for c in carts:
-        result.append({
-            "id": c.id,
-            "user_id": c.user_id,
-            "created_at": c.created_at,
-            "products": [
-                {
-                    "id": ci.product.id,
-                    "name": ci.product.name,
-                    "price": ci.product.price,
-                    "quantity": ci.quantity,
-                    "category": {
-                        "id": ci.product.category.id,
-                        "name": ci.product.category.name,
-                        "description": ci.product.category.description
-                    },
-                    "stock_status": "Out of Stock" if ci.product.remaining_units == 0 else "Available"
-                }
-                for ci in c.items
-            ]
-        })
-    return result
+    return {
+        "id": cart.id,
+        "user_id": cart.user_id,
+        "created_at": cart.created_at,
+        "products": [
+            {
+                "id": ci.product.id,
+                "name": ci.product.name,
+                "price": ci.product.price,
+                "quantity": ci.quantity,
+                "category": {
+                    "id": ci.product.category.id,
+                    "name": ci.product.category.name,
+                    "description": ci.product.category.description
+                },
+                "stock_status": "Out of Stock" if ci.product.remaining_units == 0 else "Available"
+            }
+            for ci in cart.items
+        ]
+    }
