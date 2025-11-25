@@ -1,4 +1,3 @@
-# products.py
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from database import get_db
@@ -19,7 +18,8 @@ def create_product(payload: schemas.ProductCreate, db: Session = Depends(get_db)
         price=payload.price,
         category_id=payload.category_id,
         total_units=payload.total_units,
-        remaining_units=payload.remaining_units if payload.remaining_units is not None else payload.total_units
+        remaining_units=payload.remaining_units if payload.remaining_units is not None else payload.total_units,
+        quantity=payload.quantity
     )
     db.add(product)
     db.commit()
@@ -33,6 +33,7 @@ def create_product(payload: schemas.ProductCreate, db: Session = Depends(get_db)
         "category": schemas.CategoryOut(
             id=category.id, name=category.name, description=category.description
         ),
+        "quantity": product.quantity,
         "stock_status": "Out of Stock" if product.remaining_units == 0 else "Available"
     }
 
@@ -52,6 +53,7 @@ def list_products(db: Session = Depends(get_db)):
                 name=p.category.name,
                 description=p.category.description
             ),
+            "quantity": p.quantity,
             "stock_status": "Out of Stock" if p.remaining_units == 0 else "Available"
         })
     return result

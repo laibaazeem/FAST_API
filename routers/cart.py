@@ -1,4 +1,3 @@
-# cart.py
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from database import get_db
@@ -30,13 +29,25 @@ def add_to_cart(payload: schemas.CartCreate, db: Session = Depends(get_db)):
         cart_item = models.CartItem(cart_id=cart.id, product_id=product.id, quantity=item.quantity)
         db.add(cart_item)
     db.commit()
+    db.refresh(cart)
 
     return {
         "id": cart.id,
         "user_id": cart.user_id,
         "created_at": cart.created_at,
         "products": [
-            {"id": ci.product.id, "name": ci.product.name, "price": ci.product.price, "quantity": ci.quantity}
+            {
+                "id": ci.product.id,
+                "name": ci.product.name,
+                "price": ci.product.price,
+                "quantity": ci.quantity,
+                "category": {
+                    "id": ci.product.category.id,
+                    "name": ci.product.category.name,
+                    "description": ci.product.category.description
+                },
+                "stock_status": "Out of Stock" if ci.product.remaining_units == 0 else "Available"
+            }
             for ci in cart.items
         ]
     }
@@ -62,11 +73,43 @@ def checkout_cart(cart_id: int, db: Session = Depends(get_db)):
         item.product.remaining_units -= item.quantity
         total += item.product.price * item.quantity
 
-    order = models.Order(user_id=cart.user_id, cart_id=cart.id, total_amount=total, order_status="confirmed")
+    # order = models.Order(user_id=cart.user_id, cart_id=cart.id, total_amount=total, order_status="confirmed")
+    # cart.is_checked_out = True
+    # db.add(order)
+    # db.commit()
+    # db.refresh(order)
+    # db.refresh(cart)
+      
+
+# Create a new cart for this order
+    order_cart = models.Cart(user_id=cart.user_id)
+    db.add(order_cart)
+    db.commit()
+    db.refresh(order_cart)
+
+    # Copy items from the original cart
+    for item in cart.items:
+        order_item = models.CartItem(
+            cart_id=order_cart.id,
+            product_id=item.product_id,
+            quantity=item.quantity
+        )
+        db.add(order_item)
+    db.commit()
+
+    # Create the order with the new cart
+    order = models.Order(
+        user_id=cart.user_id,
+        cart_id=order_cart.id,
+        total_amount=total,
+        order_status="confirmed"
+    )
     cart.is_checked_out = True
     db.add(order)
     db.commit()
     db.refresh(order)
+    db.refresh(cart)
+
 
     return {
         "order_id": order.id,
@@ -74,7 +117,7 @@ def checkout_cart(cart_id: int, db: Session = Depends(get_db)):
         "cart_id": order.cart_id,
         "total_amount": order.total_amount,
         "order_status": order.order_status,
-        "order_time": order.order_time
+        "order_time": order.order_time.isoformat() if order.order_time else None
     }
 
 
@@ -95,7 +138,18 @@ def get_cart_details(user_id: int, db: Session = Depends(get_db)):
             "user_id": c.user_id,
             "created_at": c.created_at,
             "products": [
-                {"id": ci.product.id, "name": ci.product.name, "price": ci.product.price, "quantity": ci.quantity}
+                {
+                    "id": ci.product.id,
+                    "name": ci.product.name,
+                    "price": ci.product.price,
+                    "quantity": ci.quantity,
+                    "category": {
+                        "id": ci.product.category.id,
+                        "name": ci.product.category.name,
+                        "description": ci.product.category.description
+                    },
+                    "stock_status": "Out of Stock" if ci.product.remaining_units == 0 else "Available"
+                }
                 for ci in c.items
             ]
         })

@@ -1,4 +1,3 @@
-# orders.py
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from database import get_db
@@ -26,10 +25,38 @@ def make_order(payload: schemas.OrderCreate, db: Session = Depends(get_db)):
             )
         item.product.remaining_units -= item.quantity
 
-    order = models.Order(user_id=user.id, cart_id=cart.id, total_amount=total, order_status="pending")
+    # order = models.Order(user_id=user.id, cart_id=cart.id, total_amount=total, order_status="pending")
+    # db.add(order)
+    # db.commit()
+    # db.refresh(order)
+
+    # Create a new cart for this order
+    order_cart = models.Cart(user_id=user.id)
+    db.add(order_cart)
+    db.commit()
+    db.refresh(order_cart)
+
+    # Copy items from the original cart
+    for item in cart.items:
+        order_item = models.CartItem(
+            cart_id=order_cart.id,
+            product_id=item.product_id,
+            quantity=item.quantity
+        )
+        db.add(order_item)
+    db.commit()
+
+    # Create the order linked to the new cart
+    order = models.Order(
+        user_id=user.id,
+        cart_id=order_cart.id,
+        total_amount=total,
+        order_status="pending"
+    )
     db.add(order)
     db.commit()
     db.refresh(order)
+
 
     return {
         "id": order.id,
@@ -37,7 +64,7 @@ def make_order(payload: schemas.OrderCreate, db: Session = Depends(get_db)):
         "cart_id": order.cart_id,
         "total_amount": order.total_amount,
         "order_status": order.order_status,
-        "order_time": order.order_time,
+        "order_time": order.order_time.isoformat() if order.order_time else None,
         "user_email": user.email
     }
 
@@ -53,7 +80,7 @@ def list_orders(db: Session = Depends(get_db)):
             "cart_id": o.cart_id,
             "total_amount": o.total_amount,
             "order_status": o.order_status,
-            "order_time": o.order_time,
+            "order_time": o.order_time.isoformat() if o.order_time else None,
             "user_email": o.user.email
         })
     return result

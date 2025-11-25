@@ -1,8 +1,6 @@
-# schemas.py
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
-
-# ---------- Auth ----------
+from datetime import datetime
 
 class RegisterIn(BaseModel):
     email: EmailStr
@@ -26,7 +24,6 @@ class TokenOut(BaseModel):
     class Config:
         from_attributes = True
 
-# ---------- Category ----------
 
 class CategoryBase(BaseModel):
     name: str
@@ -45,18 +42,18 @@ class CategoryOut(CategoryBase):
     class Config:
         from_attributes = True
 
-# ---------- Product ----------
 
 class ProductBase(BaseModel):
     name: str
     description: Optional[str] = None
     price: float
-    quantity: int
+    quantity: Optional[int] = 0
 
 class ProductCreate(ProductBase):
     category_id: int
     total_units: int
     remaining_units: int
+    quantity: int
 
 class ProductUpdate(BaseModel):
     name: Optional[str] = None
@@ -68,11 +65,11 @@ class ProductOut(ProductBase):
     id: int
     category: CategoryOut
     stock_status: str
+    quantity: Optional[int] = 0
 
     class Config:
         from_attributes = True
 
-# ---------- Cart ----------
 
 class CartProduct(BaseModel):
     product_id: int
@@ -85,13 +82,12 @@ class CartCreate(BaseModel):
 class CartOut(BaseModel):
     id: int
     user_id: int
-    created_at: Optional[str]
+    created_at: Optional[datetime]
     products: List[ProductOut]
 
     class Config:
         from_attributes = True
 
-# ---------- Checkout / Orders ----------
 
 class CheckoutOut(BaseModel):
     order_id: int

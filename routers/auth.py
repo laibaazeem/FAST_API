@@ -1,10 +1,10 @@
-# auth.py
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from database import get_db
 import schemas, models
 from passlib.context import CryptContext
-import jwt, os
+import jwt
+import os
 from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -15,11 +15,18 @@ ALGORITHM = "HS256"
 
 
 def hash_password(password: str):
-    return pwd_context.hash(password[:72])
+
+    if not password:
+        raise HTTPException(status_code=400, detail="Password cannot be empty")
+    password_bytes = password.encode("utf-8")[:72]  
+    return pwd_context.hash(password_bytes)
 
 
 def verify_password(password: str, hashed: str):
-    return pwd_context.verify(password[:72], hashed)
+    if not password:
+        return False
+    password_bytes = password.encode("utf-8")[:72]  
+    return pwd_context.verify(password_bytes, hashed)
 
 
 def create_token(data: dict):

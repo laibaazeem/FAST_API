@@ -1,4 +1,3 @@
-# models.py
 from sqlalchemy import Column, Integer, String, Float, Text, ForeignKey, DateTime, Boolean, func
 from sqlalchemy.orm import relationship
 from database import Base
@@ -32,7 +31,7 @@ class Product(Base):
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
     total_units = Column(Integer, default=0)
     remaining_units = Column(Integer, default=0)
-
+    quantity = Column(Integer, nullable=False, default=0)
     category = relationship("Category", back_populates="products")
     cart_items = relationship("CartItem", back_populates="product")
 
