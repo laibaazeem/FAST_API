@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - E-commerce Store</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo" onclick="window.location.href='/'">🛒 ShopHub</div>
+            
+            <ul class="nav-links">
+                <li><a href="/products">Products</a></li>
+                <li><a href="/categories">Categories</a></li>
+                <li><a href="/search">Search Products</a></li>
+                <li><a href="/cart">My Cart</a></li>
+            </ul>
+
+            <div class="search-container">
+                <input type="text" class="search-bar" placeholder="Search products..." id="searchInput">
+                <button class="search-btn" onclick="searchProducts()">🔍</button>
+            </div>
+
+            <div class="auth-buttons">
+                <button class="btn login-btn" onclick="window.location.href='/login'">Login</button>
+                <button class="btn register-btn" onclick="window.location.href='/register'">Register</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Register Form -->
+    <div class="auth-container">
+        <h2>Create Your Account</h2>
+        <form onsubmit="handleRegister(event)">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" required>
+            </div>
+            <button type="submit" class="submit-btn">Register</button>
+        </form>
+        <div class="auth-link">
+            Already have an account? <a href="/login">Login here</a>
+        </div>
+    </div>
+
+    
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

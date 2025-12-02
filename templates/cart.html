@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Cart - E-commerce Store</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .cart-item-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        
+        .cart-item-image {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            flex-shrink: 0;
+        }
+        
+        .cart-item-details {
+            flex: 1;
+        }
+        
+        .cart-item-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        
+        .cart-item-price {
+            font-size: 1.2rem;
+            color: #27ae60;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .quantity-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        
+        .quantity-btn:hover {
+            background: #2980b9;
+        }
+        
+        .quantity-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .quantity-display {
+            font-size: 1.2rem;
+            font-weight: bold;
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        .remove-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+        
+        .remove-btn:hover {
+            background: #c0392b;
+        }
+        
+        .cart-item-subtotal {
+            text-align: right;
+            flex-shrink: 0;
+        }
+        
+        .subtotal-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .subtotal-amount {
+            font-size: 1.5rem;
+            color: #27ae60;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo" onclick="window.location.href='/'">🛒 ShopHub</div>
+            
+            <ul class="nav-links">
+                <li><a href="/products">Products</a></li>
+                <li><a href="/categories">Categories</a></li>
+                <li><a href="/search">Search Products</a></li>
+                <li><a href="/cart">My Cart</a></li>
+            </ul>
+
+            <div class="search-container">
+                <input type="text" class="search-bar" placeholder="Search products..." id="searchInput">
+                <button class="search-btn" onclick="searchProducts()">🔍</button>
+            </div>
+
+            <div class="auth-buttons">
+                <button class="btn login-btn" onclick="window.location.href='/login'">Login</button>
+                <button class="btn register-btn" onclick="window.location.href='/register'">Register</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Cart Section -->
+    <div class="products-section">
+        <h2 class="section-title">My Shopping Cart</h2>
+        
+        <div id="cartContainer" style="max-width: 1000px; margin: 0 auto;">
+            <!-- Cart items will be loaded here -->
+        </div>
+
+        <div id="cartSummary" style="max-width: 600px; margin: 2rem auto; background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <!-- Cart summary will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 E-commerce Store. All rights reserved.</p>
+    </footer>
+
+    <script src="/static/script.js"></script>
+    <script>
+        let cartData = null;
+        let cartItems = {};
+
+        // Load cart when page loads
+        loadCart();
+
+        async function loadCart() {
+            const savedUser = localStorage.getItem('currentUser');
+            const savedToken = localStorage.getItem('authToken');
+            
+            if (!savedUser || !savedToken) {
+                document.getElementById('cartContainer').innerHTML = `
+                    <div style="text-align: center; padding: 3rem;">
+                        <h3>Please login to view your cart</h3>
+                        <button class="btn login-btn" onclick="window.location.href='/login'" style="margin-top: 1rem; padding: 0.8rem 2rem;">Login Now</button>
+                    </div>
+                `;
+                document.getElementById('cartSummary').style.display = 'none';
+                return;
+            }
+
+            const currentUser = JSON.parse(savedUser);
+            
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/cart/user/${currentUser.id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${savedToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        showEmptyCart();
+                        return;
+                    }
+                    throw new Error('Failed to fetch cart');
+                }
+
+                cartData = await response.json();
+                
+                // Initialize cart items with quantities
+                cartItems = {};
+                cartData.products.forEach(product => {
+                    cartItems[product.id] = {
+                        ...product,
+                        quantity: product.quantity || 1
+                    };
+                });
+                
+                displayCart();
+                
+            } catch (error) {
+                console.error('Cart error:', error);
+                showEmptyCart();
+            }
+        }
+
+        function showEmptyCart() {
+            document.getElementById('cartContainer').innerHTML = `
+                <div style="text-align: center; padding: 3rem;">
+                    <h3>Your cart is empty</h3>
+                    <p style="color: #7f8c8d; margin: 1rem 0;">Start adding products to your cart!</p>
+                    <button class="btn register-btn" onclick="window.location.href='/products'" style="margin-top: 1rem; padding: 0.8rem 2rem;">Browse Products</button>
+                </div>
+            `;
+            document.getElementById('cartSummary').style.display = 'none';
+        }
+
+        function displayCart() {
+            const container = document.getElementById('cartContainer');
+            const summary = document.getElementById('cartSummary');
+            
+            const items = Object.values(cartItems);
+            
+            if (items.length === 0) {
+                showEmptyCart();
+                return;
+            }
+
+            // Calculate total
+            let total = 0;
+            let totalItems = 0;
+            items.forEach(item => {
+                total += item.price * item.quantity;
+                totalItems += item.quantity;
+            });
+
+            // Display cart items
+            container.innerHTML = items.map(item => `
+                <div class="cart-item-card">
+                    <div class="cart-item-image">📦</div>
+                    
+                    <div class="cart-item-details">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div style="color: #7f8c8d; font-size: 0.9rem; margin-bottom: 0.5rem;">
+                            ${item.description || 'No description'}
+                        </div>
+                        <div class="cart-item-price">₨ ${item.price.toLocaleString()}</div>
+                        
+                        <div class="quantity-control">
+                            <button class="quantity-btn" onclick="updateQuantity(${item.id}, -1)" ${item.quantity <= 1 ? 'disabled' : ''}>−</button>
+                            <span class="quantity-display">${item.quantity}</span>
+                            <button class="quantity-btn" onclick="updateQuantity(${item.id}, 1)">+</button>
+                            <button class="remove-btn" onclick="removeItem(${item.id})">Remove</button>
+                        </div>
+                    </div>
+                    
+                    <div class="cart-item-subtotal">
+                        <div class="subtotal-label">Subtotal</div>
+                        <div class="subtotal-amount">₨ ${(item.price * item.quantity).toLocaleString()}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Display cart summary
+            summary.innerHTML = `
+                <h3 style="margin-bottom: 1.5rem; color: #2c3e50;">Cart Summary</h3>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 2px solid #ecf0f1;">
+                    <span style="font-size: 1.1rem;">Total Items:</span>
+                    <strong style="font-size: 1.1rem;">${totalItems}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
+                    <span style="font-size: 1.3rem; font-weight: bold;">Total Amount:</span>
+                    <strong style="font-size: 1.5rem; color: #27ae60;">₨ ${total.toLocaleString()}</strong>
+                </div>
+                <button class="submit-btn" onclick="proceedToCheckout()" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+                    Proceed to Checkout
+                </button>
+                <button class="btn" onclick="window.location.href='/products'" style="width: 100%; margin-top: 1rem; padding: 1rem; background: white; color: #3498db; border: 2px solid #3498db;">
+                    Continue Shopping
+                </button>
+            `;
+        }
+
+        function updateQuantity(productId, change) {
+            if (cartItems[productId]) {
+                const newQuantity = cartItems[productId].quantity + change;
+                if (newQuantity >= 1) {
+                    cartItems[productId].quantity = newQuantity;
+                    displayCart();
+                }
+            }
+        }
+
+        function removeItem(productId) {
+            if (confirm('Remove this item from cart?')) {
+                delete cartItems[productId];
+                displayCart();
+            }
+        }
+
+        async function proceedToCheckout() {
+            const savedUser = localStorage.getItem('currentUser');
+            const savedToken = localStorage.getItem('authToken');
+            
+            if (!savedUser || !savedToken) {
+                alert('Please login to checkout');
+                window.location.href = '/login';
+                return;
+            }
+
+            const currentUser = JSON.parse(savedUser);
+            
+            // Prepare cart data for checkout
+            const checkoutProducts = Object.values(cartItems).map(item => ({
+                product_id: item.id,
+                quantity: item.quantity
+            }));
+
+            if (confirm('Proceed to checkout?')) {
+                try {
+                    // Create new cart with updated quantities
+                    const cartResponse = await fetch('http://127.0.0.1:8000/cart/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${savedToken}`
+                        },
+                        body: JSON.stringify({
+                            user_id: currentUser.id,
+                            products: checkoutProducts
+                        })
+                    });
+
+                    if (!cartResponse.ok) {
+                        const errorData = await cartResponse.json();
+                        alert(errorData.detail || 'Failed to update cart');
+                        return;
+                    }
+
+                    const newCart = await cartResponse.json();
+
+                    // Checkout the new cart
+                    const checkoutResponse = await fetch(`http://127.0.0.1:8000/cart/checkout/${newCart.id}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${savedToken}`
+                        }
+                    });
+
+                    const data = await checkoutResponse.json();
+
+                    if (!checkoutResponse.ok) {
+                        alert(data.detail || 'Checkout failed');
+                        return;
+                    }
+
+                    alert(`Order placed successfully!\nOrder ID: ${data.order_id}\nTotal: ₨${data.total_amount.toLocaleString()}`);
+                    
+                    // Clear cart items
+                    cartItems = {};
+                    
+                    window.location.href = '/';
+                    
+                } catch (error) {
+                    console.error('Checkout error:', error);
+                    alert('Error during checkout');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

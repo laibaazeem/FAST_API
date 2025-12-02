@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categories - E-commerce Store</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo" onclick="window.location.href='index.html'">🛒 ShopHub</div>
+            
+            <ul class="nav-links">
+                <li><a href="products.html">Products</a></li>
+                <li><a href="categories.html">Categories</a></li>
+                <li><a href="search.html">Search Products</a></li>
+                <li><a href="/cart">My Cart</a></li>
+            </ul>
+
+            <div class="search-container">
+                <input type="text" class="search-bar" placeholder="Search products..." id="searchInput">
+                <button class="search-btn" onclick="searchProducts()">🔍</button>
+            </div>
+
+            <div class="auth-buttons">
+                <button class="btn login-btn" onclick="window.location.href='login.html'">Login</button>
+                <button class="btn register-btn" onclick="window.location.href='register.html'">Register</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Categories Section -->
+    <div class="products-section">
+        <h2 class="section-title">Browse by Category</h2>
+        
+        <div class="categories-grid">
+            <div class="category-card" onclick="showCategoryProducts('Electronics')">
+                <div class="category-icon">💻</div>
+                <h3>Electronics</h3>
+                <p style="color: #7f8c8d; margin-top: 0.5rem;">8 Products</p>
+            </div>
+            <div class="category-card" onclick="showCategoryProducts('Fashion')">
+                <div class="category-icon">👕</div>
+                <h3>Fashion</h3>
+                <p style="color: #7f8c8d; margin-top: 0.5rem;">4 Products</p>
+            </div>
+            <div class="category-card" onclick="showCategoryProducts('Makeup')">
+                <div class="category-icon">💄</div>
+                <h3>Makeup</h3>
+                <p style="color: #7f8c8d; margin-top: 0.5rem;">Coming Soon</p>
+            </div>
+            <div class="category-card" onclick="showCategoryProducts('Books')">
+                <div class="category-icon">📚</div>
+                <h3>Books</h3>
+                <p style="color: #7f8c8d; margin-top: 0.5rem;">Coming Soon</p>
+            </div>
+        </div>
+
+       
+
+    
+
+    <script src="/static/script.js"></script>
+    <script>
+        // Display electronics by default
+        const electronicsProducts = products.filter(p => p.category === 'Electronics');
+        displayProducts(electronicsProducts);
+
+        function showCategoryProducts(category) {
+            const filtered = products.filter(p => p.category === category);
+            if (filtered.length > 0) {
+                displayProducts(filtered);
+                document.querySelector('.section-title:last-of-type').textContent = category;
+            } else {
+                alert(`No products available in ${category} category yet!`);
+            }
+        }
+    </script>
+</body>
+</html>

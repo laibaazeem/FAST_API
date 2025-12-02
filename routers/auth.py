@@ -15,7 +15,6 @@ ALGORITHM = "HS256"
 
 
 def hash_password(password: str):
-
     if not password:
         raise HTTPException(status_code=400, detail="Password cannot be empty")
     password_bytes = password.encode("utf-8")[:72]  
@@ -50,10 +49,18 @@ def register_user(payload: schemas.RegisterIn, db: Session = Depends(get_db)):
     return {"message": "User registered successfully"}
 
 
-@router.post("/login", response_model=schemas.TokenOut)
+@router.post("/login")
 def login_user(payload: schemas.LoginIn, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == payload.email).first()
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    token = create_token({"sub": user.email, "role": user.role})
-    return {"access_token": token, "token_type": "bearer"}
+    
+    token = create_token({"sub": user.email, "role": user.role, "user_id": user.id})
+    
+    # Return token along with user info
+    return {
+        "access_token": token, 
+        "token_type": "bearer",
+        "user_id": user.id,
+        "email": user.email
+    }

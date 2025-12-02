@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Products - E-commerce Store</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo" onclick="window.location.href='/'">🛒 ShopHub</div>
+            
+            <ul class="nav-links">
+                <li><a href="/products">Products</a></li>
+                <li><a href="/categories">Categories</a></li>
+                <li><a href="/search">Search Products</a></li>
+                <li><a href="/cart">My Cart</a></li>
+            </ul>
+
+            <div class="search-container">
+                <input type="text" class="search-bar" placeholder="Search products..." id="searchInput">
+                <button class="search-btn" onclick="performSearchFromNav()">🔍</button>
+            </div>
+
+            <div class="auth-buttons">
+                <button class="btn login-btn" onclick="window.location.href='/login'">Login</button>
+                <button class="btn register-btn" onclick="window.location.href='/register'">Register</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Search Section -->
+    <div class="products-section">
+        <h2 class="section-title" id="searchTitle">Search Products</h2>
+        
+        <div class="search-container" style="max-width: 600px; margin: 2rem auto; padding: 0 2rem;">
+            <input type="text" class="search-bar" placeholder="Search for products..." id="mainSearchInput" style="width: 100%; max-width: 500px;">
+            <button class="search-btn" onclick="performSearch()">Search</button>
+        </div>
+
+        <div class="products-grid" id="productsGrid">
+            <!-- Products will be displayed here -->
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 E-commerce Store. All rights reserved.</p>
+    </footer>
+
+    <script src="/static/script.js"></script>
+    <script>
+        // Check if there's a search query in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchQuery = urlParams.get('q');
+        
+        if (searchQuery) {
+            document.getElementById('searchInput').value = searchQuery;
+            document.getElementById('mainSearchInput').value = searchQuery;
+            performSearch();
+        } else {
+            // Show all products by default
+            displayProducts();
+        }
+
+        async function performSearch() {
+            const searchTerm = document.getElementById('mainSearchInput').value.toLowerCase() || 
+                               document.getElementById('searchInput').value.toLowerCase();
+            
+            if (searchTerm.trim() === '') {
+                displayProducts();
+                document.getElementById('searchTitle').textContent = 'All Products';
+                return;
+            }
+
+            // Fetch all products from backend
+            const allProducts = await fetchProducts();
+            
+            // Filter products based on search term
+            const filtered = allProducts.filter(p => 
+                p.name.toLowerCase().includes(searchTerm) || 
+                (p.description && p.description.toLowerCase().includes(searchTerm)) ||
+                p.category.name.toLowerCase().includes(searchTerm)
+            );
+
+            displayProducts(filtered);
+            document.getElementById('searchTitle').textContent = `Search Results for "${searchTerm}" (${filtered.length} found)`;
+        }
+
+        function performSearchFromNav() {
+            const searchTerm = document.getElementById('searchInput').value;
+            document.getElementById('mainSearchInput').value = searchTerm;
+            performSearch();
+        }
+
+        // Allow Enter key to search
+        document.getElementById('mainSearchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+        
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearchFromNav();
+            }
+        });
+    </script>
+</body>
+</html>

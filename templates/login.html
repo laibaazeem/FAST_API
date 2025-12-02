@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - E-commerce Store</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo" onclick="window.location.href='/'">🛒 ShopHub</div>
+            
+            <ul class="nav-links">
+                <li><a href="/products">Products</a></li>
+                <li><a href="/categories">Categories</a></li>
+                <li><a href="/search">Search Products</a></li>
+                <li><a href="/cart">My Cart</a></li>
+            </ul>
+
+            <div class="search-container">
+                <input type="text" class="search-bar" placeholder="Search products..." id="searchInput">
+                <button class="search-btn" onclick="searchProducts()">🔍</button>
+            </div>
+
+            <div class="auth-buttons">
+                <button class="btn login-btn" onclick="window.location.href='/login'">Login</button>
+                <button class="btn register-btn" onclick="window.location.href='/register'">Register</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Login Form -->
+    <div class="auth-container">
+        <h2>Login to Your Account</h2>
+        <form onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit" class="submit-btn">Login</button>
+        </form>
+        <div class="auth-link">
+            Don't have an account? <a href="/register">Register here</a>
+        </div>
+    </div>
+
+    
+
+    <!-- ONLY load script.js, NO inline script -->
+    <script src="/static/script.js"></script>
+</body>
+</html>
