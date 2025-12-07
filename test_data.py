@@ -1,7 +1,3 @@
-"""
-Run this file to add sample categories and products to your database
-Usage: python test_data.py
-"""
 import requests
 
 API_BASE_URL = "http://127.0.0.1:8000"
