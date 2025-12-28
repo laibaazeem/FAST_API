@@ -2,6 +2,9 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime
 
+from fastapi import Form
+from typing import Optional
+
 class RegisterIn(BaseModel):
     email: EmailStr
     password: str
@@ -53,6 +56,7 @@ class ProductCreate(ProductBase):
     category_id: int
     total_units: int
     remaining_units: int
+    product_image: Optional[str] = None
     quantity: int
 
 class ProductUpdate(BaseModel):
@@ -115,3 +119,29 @@ class OrderOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+
+
+class ProductCreateForm:
+    def __init__(
+        self,
+        name: str = Form(...),
+        description: Optional[str] = Form(None),
+        price: float = Form(...),
+        category_id: int = Form(...),
+        total_units: int = Form(...),
+        remaining_units: Optional[int] = Form(None),
+        quantity: int = Form(...),
+        # add more fields here later
+    ):
+        self.name = name
+        self.description = description
+        self.price = price
+        self.category_id = category_id
+        self.total_units = total_units
+        self.remaining_units = remaining_units
+        self.quantity = quantity
+
+    def to_schema(self) -> ProductCreate:
+        return ProductCreate(**self.__dict__)

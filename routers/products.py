@@ -1,16 +1,25 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends,UploadFile, File
 from sqlalchemy.orm import Session
 from database import get_db
 import schemas, models
+from schemas import ProductCreateForm
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
 
 @router.post("/", response_model=schemas.ProductOut)
-def create_product(payload: schemas.ProductCreate, db: Session = Depends(get_db)):
+def create_product(form_data: schemas.ProductCreateForm = Depends(), db: Session = Depends(get_db),image: UploadFile = File()):
+    payload = form_data.to_schema()
     category = db.query(models.Category).get(payload.category_id)
     if not category:
         raise HTTPException(status_code=400, detail="Category does not exist")
+    
+
+    print("---------------------------",image.filename)
+    
+    image_path = f"static/images/{image.filename}"
+    with open(image_path, "wb") as buffer:
+        buffer.write(image.file.read())
 
     product = models.Product(
         name=payload.name,
@@ -18,6 +27,7 @@ def create_product(payload: schemas.ProductCreate, db: Session = Depends(get_db)
         price=payload.price,
         category_id=payload.category_id,
         total_units=payload.total_units,
+        product_image=image_path,
         remaining_units=payload.remaining_units if payload.remaining_units is not None else payload.total_units,
         quantity=payload.quantity
     )

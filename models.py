@@ -30,10 +30,12 @@ class Product(Base):
     price = Column(Float, default=0)
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
     total_units = Column(Integer, default=0)
+    product_image = Column(String, nullable=True)
     remaining_units = Column(Integer, default=0)
     quantity = Column(Integer, nullable=False, default=0)
     category = relationship("Category", back_populates="products")
     cart_items = relationship("CartItem", back_populates="product")
+    
 
 
 class Cart(Base):
