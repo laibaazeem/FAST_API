@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 import schemas, models
 from schemas import ProductCreateForm
+from routers.utils import upload_to_s3
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -17,9 +18,10 @@ def create_product(form_data: schemas.ProductCreateForm = Depends(), db: Session
 
     print("---------------------------",image.filename)
     
-    image_path = f"static/images/{image.filename}"
-    with open(image_path, "wb") as buffer:
-        buffer.write(image.file.read())
+    
+
+    file_url=upload_to_s3(image)
+    print("File uploaded to S3 at URL:", file_url)    
 
     product = models.Product(
         name=payload.name,
@@ -27,7 +29,7 @@ def create_product(form_data: schemas.ProductCreateForm = Depends(), db: Session
         price=payload.price,
         category_id=payload.category_id,
         total_units=payload.total_units,
-        product_image=image_path,
+        product_image=file_url,
         remaining_units=payload.remaining_units if payload.remaining_units is not None else payload.total_units,
         quantity=payload.quantity
     )
