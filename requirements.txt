@@ -10,3 +10,5 @@ requests~=2.32.5
 SQLAlchemy~=2.0.45
 Jinja2~=3.1.6
 pip~=25.3
+boto3~=1.42.25
+python-multipart~=0.0.21
